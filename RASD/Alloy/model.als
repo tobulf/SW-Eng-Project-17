@@ -17,7 +17,7 @@ open util/boolean
 sig integer{}
 sig string{}
 sig float{}
-
+sig bool{}
 
 // Coordinates
 sig coordinates{
@@ -33,7 +33,8 @@ location: lone coordinates, //only one location for each appointment
 time:  lone float,// only one time
 date: lone float, // only one date
 name: lone string, // only one name
-ETA: lone integer
+ETA: lone integer, // Estimated time to arrival
+reachable: lone bool // Bool if its reachable or not
 }
 
 //User
@@ -57,9 +58,11 @@ fact diffEmail{
 	all disj u1,u2: user | u1. email != u2.email
 }
 
+
 // Appointments are not shared between users(maybe a later extension of SW):
 fact NoSharedAppointments{
-	no disj a1,a2: appointment | a1.owner = a2.owner
+	all disj a1,a2: appointment | a1.owner = a2.owner
+	all a1,a2: user.appointments | a1.owner = a2.owner
 }
 
 fact AppointmentProperties{
@@ -70,23 +73,41 @@ fact AppointmentProperties{
 } 
 
 
+
+
+
 // Checks:
+// User login
 assert noUserIsEqual{
 	// User may not have same email:
 	all disj u1,u2: user | u1.email != u2.email
 }
+
 check noUserIsEqual
 
-assert PrivateAppointments{
-	all a:appoinment | a.owner = a.owner 
+assert oneAppointmentOneOwner{
+	// every appointment has a user assigned to it:
+	all a: appointment.owner | all u: user | a = u
 
 }
 
+check oneAppointmentOneOwner
 
 
+// Users have their own set of appointments
+pred OneAppointmentOneOwner{
+	some u: user | some a1,a2: appointment |
+	a1 in u.appointments and a1.owner != a2.owner
+	and a2 not in u.appointments
+
+}
+
+run OneAppointmentOneOwner
+
+pred show{}
 
 
-
+run show
 
 
 
